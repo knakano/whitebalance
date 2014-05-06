@@ -1,6 +1,7 @@
 <?php
 
 use \Dropbox as dbx;
+
 /*
 |--------------------------------------------------------------------------
 | Application Routes
@@ -12,42 +13,42 @@ use \Dropbox as dbx;
 |
 */
 
-Route::get('/', function()
-{
-	return View::make('hello');
-});
+// Home Page
+Route::get('/', 'LoginController@displayHome');
 
+// Create Account + Dropbox OAuth
+Route::get('/auth', 'LoginController@authorize');
+Route::get('/create-account', 'LoginController@startAuth');
+Route::post('signup-process', 'LoginController@createAccount');
 
-Route::get('/dropbox', function(){
+// Login
+Route::get('/login', 'LoginController@loginView');
+Route::post('login', 'LoginController@login');
+Route::get('/logout', 'LoginController@logout');
 
-        $json = Cache::get('dropbox-wb');
+// View Profile
+Route::get('/user/{username}', 'HomeController@viewUserProfile');
 
-        /*
-         * AUTH FOR FUTURE
-         *
-         * $appInfo = dbx\AppInfo::loadFromJsonFile("app-info.json");
-         * $webAuth = new dbx\WebAuthNoRedirect($appInfo, "PHP-Example/1.0");
-         *
-         * $authorizeUrl = $webAuth->start();
-         * echo "1. Go to: " . $authorizeUrl . "\n";
-         * echo "2. Click \"Allow\" (you might have to log in first).\n";
-         * print "1. Go to: " . $authorizeUrl . "\n";
-         * $authCode = \trim(\readline("Enter the authorization code here: "));
-         *
-         * list($accessToken, $dropboxUserId) = $webAuth->finish($authCode);
-         * print "Access Token: " . $accessToken . "\n";
-        */
-        if (!$json) {
-            // For development, use my Dropbox access token
-            $accessToken = "SBllbPfanCUAAAAAAAAATZpho78gn3IrZqTOmPp-PLQGl3F2Ft4z8uEU540zGr_M";
-            $dbxClient = new dbx\Client($accessToken, "PHP-Example/1.0");
-            //$accountInfo = $dbxClient->getAccountInfo();
-            $json = $dbxClient->getAccountInfo();
+// My Profile
+Route::get('home', [
+    'before' => 'auth',
+    'uses' => 'HomeController@viewMyProfile'
+]);
+Route::get('/profile', [
+    'before' => 'auth',
+    'uses' => 'HomeController@viewMyProfile'
+]);
 
-            Cache::put('dropbox-wb', $json, 10);
-        }
-
-        //header('Content-type: application/json');
-        dd($json);
-
-});
+// Favorites
+Route::get('/favorites', [
+    'before' => 'auth',
+    'uses' => 'FavoritesController@viewFavorites'
+]);
+Route::get('/favorites/add/{username}', [
+    'before' => 'auth',
+    'uses' => 'FavoritesController@addFavorite'
+]);
+Route::get('/favorites/remove/{username}', [
+    'before' => 'auth',
+    'uses' => 'FavoritesController@removeFavorite'
+]);
